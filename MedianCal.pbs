@@ -1,0 +1,35 @@
+ #!/bin/bash
+
+#PBS -N movieData
+#PBS -l select=3:ncpus=8:mem=14gb
+#PBS -l walltime=00:20:00
+#PBS -j oe
+
+cd ~/myhadoop
+
+
+./init_hadoop.sh
+
+
+export HADOOP_CONF_DIR="/home/$USER/hadoop_palmetto/config/"
+
+
+hdfs dfs -mkdir -p /user/$USER/intro-to-hadoop
+hdfs dfs -put /zfs/citi/movielens intro-to-hadoop/
+
+
+mkdir movielens
+hdfs dfs -get intro-to-hadoop/movielens/movies.csv movielens/
+
+
+mapred streaming -input intro-to-hadoop/movielens/ratings.csv -output intro-to-hadoop/medianCal -file ./proj4/MedianMapper.py -mapper MedianMapper.py -file ./proj4/MedianReducer.py -reducer MedianReducer.py -file ./movielens/movies.csv
+
+
+hdfs dfs -get intro-to-hadoop/medianCal .
+
+#test to grab mapper output for debugging
+
+
+# stop Hadoop cluster
+./stop_hadoop.sh
+
